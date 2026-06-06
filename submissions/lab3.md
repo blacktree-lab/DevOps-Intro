@@ -29,7 +29,7 @@ SHA pinning prevents a **tag-hijacking / supply-chain attack**. If a third-party
 
 ### 1.3 Green CI Run
 
-[green_run_1.png]
+![Green CI Run](green_run_1.png)
 
 Link to green CI run: https://github.com/blacktree-lab/DevOps-Intro/actions/runs/27049565155
 
@@ -38,24 +38,50 @@ Link to green CI run: https://github.com/blacktree-lab/DevOps-Intro/actions/runs
 **What was broken:**
 Changed `http.StatusCreated` to `http.StatusOK` in `app/handlers_test.go` to make the test expect 200 instead of 201.
 
-[failed_run.png]
+![Failed Run](failed_run.png)
 
 **Fix commit:** Reverted `http.StatusOK` back to `http.StatusCreated`.
 
-[green_run_2.png]
+![Green CI Run](green_run_2.png)
 
 ### 1.5 Branch Protection
 
-[main_rules.png]
+![Branch RUles](main_rules.png)
 
 ---
 
-## Task 2 — Cache + Matrix + Path Filter
+## Task 2 - Cache + Matrix + Path Filter
 
 ### Timing Table
 
 | Scenario | Wall-clock |
 |----------|-----------|
 | Baseline (no cache, single Go version, no path filter) | 25s |
-| With cache | XX s |
-| With cache + matrix | XX s |
+| With cache | 28s |
+| With cache + matrix | 27s |
+
+### Optimizations Applied
+
+**Cache (`cache-dependency-path: app/go.sum`):**
+`actions/setup-go` caches the Go module download cache and build cache, keyed on `app/go.sum`. When dependencies haven't changed, the download step is skipped entirely, saving time on every subsequent run.
+
+**Build matrix (Go 1.23 + 1.24):**
+`strategy.matrix` runs `vet` and `test` against both Go versions in parallel. This catches bugs that only appear on a specific toolchain version. `fail-fast: false` ensures both matrix cells complete even if one fails, giving full visibility.
+
+**Path filter (`paths: app/**, .github/workflows/ci.yml`):**
+The pipeline only triggers when Go source files or the CI config itself changes. Editing a markdown file or README no longer burns CI minutes.
+
+![no CI run for README commit](no_ci_run.png)
+
+### Design Questions
+
+**f) Why cache `go.sum`-keyed inputs and not build outputs?**
+`go.sum` contains cryptographic hashes of every dependency — a deterministic fingerprint of the exact module versions in use. Caching inputs (downloaded modules) is safe because the same `go.sum` always produces the same modules. Build outputs (compiled binaries) can vary subtly between runs due to timestamps or environment differences, making them unreliable cache entries.
+
+**g) What does `fail-fast: false` change in a matrix run?**
+By default (`fail-fast: true`), GitHub cancels all remaining matrix jobs the moment one fails. Setting `fail-fast: false` lets all combinations run to completion. You want it `false` when you need to see *which* combinations are broken — e.g. "does Go 1.23 fail but 1.24 pass?". Use `fail-fast: true` in large matrices where an early failure makes all other results irrelevant.
+
+**h) What's the risk of a malicious PR poisoning the cache?**
+A PR from a fork could write a poisoned cache entry that a protected branch later reads, introducing malicious code into trusted runs. GitHub mitigates this by isolating cache scopes: caches written from a fork PR are not accessible to runs on the base branch or other PRs. See: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+
+---
