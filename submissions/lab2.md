@@ -30,6 +30,7 @@ gpgsig -----BEGIN SSH SIGNATURE-----
 040000 tree c4d97cb0c02fa9315ffaf57c3f25aab6eec3e0c6	submissions
 
 #### Blob object contents `git cat-file -p 1c0a1e94b7bbdd951f456cda51af6b8484cc3cee`
+```text
 # ⚠️  KEEP THIS FILE MINIMAL.
 #
 # This .gitignore is inherited by every student fork. Anything listed here
@@ -93,11 +94,12 @@ Thumbs.db
 #   *.sbom.cdx.json, zap-*.html/json, trivy-*.txt   (Lab 9 scan evidence)
 #   flake.nix, flake.lock      (Lab 11)
 #   wasm/main.go, spin.toml, go.sum   (Lab 12)
-
+```
 
 ### Task 1.2 — Inside .git/
 
 #### High-level structure `ls -la .git/`
+```text
 drwxr-xr-x. 1 user user  188 Jun  5 17:59 .
 drwxr-xr-x. 1 user user   98 Jun  5 15:36 ..
 -rw-r--r--. 1 user user   70 Jun  5 16:33 COMMIT_EDITMSG
@@ -113,6 +115,7 @@ drwxr-xr-x. 1 user user  176 Jun  5 16:33 objects
 -rw-r--r--. 1 user user   41 Jun  5 17:59 ORIG_HEAD
 -rw-r--r--. 1 user user   112 Jun  5 08:38 packed-refs
 drwxr-xr-x. 1 user user   32 Jun  5 08:38 refs
+```
 
 #### Current HEAD `cat .git/HEAD`
 ref: refs/heads/feature/lab2
@@ -121,6 +124,7 @@ ref: refs/heads/feature/lab2
 feature  main
 
 #### Objects directory `ls .git/objects/ | head`
+```text
 0a
 0f
 12
@@ -131,9 +135,10 @@ feature  main
 22
 25
 27
+```
 
 #### Total loose objects `find .git/objects -type f | wc -l`
-find .git/objects -type f | wc -l
+148
 
 #### Interpretation
 - `.git/HEAD` points to the currently checked-out branch ref
@@ -149,6 +154,7 @@ compressed with zlib, organized into subdirectories by the first
 ### Task 1.3 — Simulate disaster + recover
 
 #### Two commits made `git log --oneline`
+```text
 bb28227 (HEAD -> feature/lab2, origin/feature/lab1, feature/lab1) docs(lab1): add Knight Capital reflection
 a7c9ccb Added community engagement section
 491accc docs(lab1): add GitHub Community section
@@ -226,8 +232,10 @@ af0da89 feat: update lab1
 74a8c27 Publish lab1
 f0485c0 Publish lec1
 31dd11b Publish README.md
+```
 
 #### Reflog showing full HEAD history `git reflog` 
+```text
 bb28227 (HEAD -> feature/lab2, origin/feature/lab1, feature/lab1) HEAD@{0}: reset: moving to HEAD~2
 f9c7587 HEAD@{1}: commit: wip(lab2): more progress
 0f1874b HEAD@{2}: commit: wip(lab2): start
@@ -249,6 +257,7 @@ a7c94d7 HEAD@{17}: commit: docs(lab1): start submission
 d9535bf HEAD@{18}: commit (amend): docs(lab1): align Task 3 GitHub Community engagement with other courses
 66bbd4d (upstream/main, upstream/HEAD) HEAD@{19}: checkout: moving from main to feature/lab1
 66bbd4d (upstream/main, upstream/HEAD) HEAD@{20}: clone: from github.com:blacktree-lab/DevOps-Intro.git
+```
 
 #### Recovery command `git reset --hard f9c7587`
 HEAD is now at f9c7587 wip(lab2): more progress
@@ -256,6 +265,8 @@ HEAD is now at f9c7587 wip(lab2): more progress
 #### What if git gc had run first?
 `git gc` permanently deletes unreferenced objects once the reflog grace period expires (default 30 days, or immediately with `git gc --prune=now`). If garbage collection had run between the bad reset and the recovery attempt, the orphaned commits would have been deleted from `.git/objects/` and their reflog entries pruned — making recovery impossible without an external backup or remote copy.
 
+
+---
 
 ## Task 2 — Tag a Release & Rebase a Feature
 
@@ -265,6 +276,7 @@ HEAD is now at f9c7587 wip(lab2): more progress
 v0.1.0-lab2-mackay tag commit
 
 #### Tag verification `git tag -v "v0.1.0-lab2-${USER}"`
+```text
 object eac5ad8a8f4e84670bacc33ebf4d8c9591221642
 type commit
 tag v0.1.0-lab2-mackay
@@ -272,11 +284,12 @@ tagger DJ Bubu <djbubu28@yahoo.com> 1780652824 +1000
 
 Lab 2 milestone — version control deep dive
 Good "git" signature for djbubu28@yahoo.com with ED25519 key SHA256:QARDeDo9ASATwzSKffgwflEQuIS3bgo/m5fIrCCrgpY
-
+```
 
 ### 2.2: Rebase + force-with-lease
 
 #### Capture log before rebase `git fetch origin`
+```text
 * 30bfe0a (HEAD -> feature/lab2, origin/feature/lab2) docs(lab2): task 1 Git Object Model + Reflog Recovery
 * f9c7587 wip(lab2): more progress
 * 0f1874b wip(lab2): start
@@ -308,8 +321,10 @@ Good "git" signature for djbubu28@yahoo.com with ED25519 key SHA256:QARDeDo9ASAT
 * 87810a0 feat: remove old Exam Exemption Policy
 * 1e1c32b feat: update structure
 * 6c27ee7 feat: publish lecs 9 & 10
+```
 
 #### Capture log after rebase `git fetch origin`
+```text
 * 30bfe0a (HEAD -> feature/lab2, origin/feature/lab2) docs(lab2): task 1 Git Object Model + Reflog Recovery
 * f9c7587 wip(lab2): more progress
 * 0f1874b wip(lab2): start
@@ -341,16 +356,17 @@ Good "git" signature for djbubu28@yahoo.com with ED25519 key SHA256:QARDeDo9ASAT
 * 87810a0 feat: remove old Exam Exemption Policy
 * 1e1c32b feat: update structure
 * 6c27ee7 feat: publish lecs 9 & 10
+```
 
 #### Merge vs Rebase — when to choose which?
 Use **rebase** when working on a personal feature branch to keep a clean, linear history that's easy to review. Use **merge** when integrating long-lived branches or public branches where rewriting history would be disruptive to other contributors. The golden rule: never rebase commits that have already been pushed to a shared branch others are working on.
 
+---
 
 ## Bonus Task — Git Bisect
 
-
-### Bisect log
-$ git bisect log
+### Bisect log - `git bisect log`
+```text
 git bisect log
 git bisect start
 # status: waiting for both good and bad commits
@@ -364,13 +380,15 @@ git bisect bad f285ede8611e55ac0a7d01100891c0cc775e0709
 # good: [cb89bb9ee2ee5010b166061447eaca3ae0da2378] docs(store): comment the load() decode step
 git bisect good cb89bb9ee2ee5010b166061447eaca3ae0da2378
 # first bad commit: [f285ede8611e55ac0a7d01100891c0cc775e0709] refactor(store): simplify nextID restoration in load()
-
+```
 
 ### Offending commit
+```text
 f0c9243 docs(app): mention go test invocation
 9fe75cc docs(store): document Count()
 f285ede refactor(store): simplify nextID restoration in load()
 cb89bb9 docs(store): comment the load() decode step  ← bisect stopped here last time
+```
 
-### How bisect found it in log₂(N) steps
+### How bisect found it in log2(N) steps
 Git bisect uses a binary search algorithm. At each step it picks the commit exactly halfway between the known-good and known-bad boundaries. This means for N commits, it only needs log2(N) steps to find the bug. 
